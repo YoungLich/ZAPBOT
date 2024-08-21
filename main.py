@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
 from pushnator import save_login_data, load_login_data, execute_site_automation
-from zapbot import send_whatsapp_messages, send_scheduled_message
+from zapbot import send_whatsapp_messages, send_scheduled_message, send_file
 
 def open_site_window():
     site_window = tk.Toplevel(root)
@@ -64,9 +64,6 @@ def open_whatsapp_window():
     whatsapp_window.geometry("600x500")
     whatsapp_window.configure(bg="#E0F7FA")
 
-    send_button = tk.Button(whatsapp_window, text="Enviar Mensagens", command=send_whatsapp_messages)
-    send_button.pack(pady=20)
-
     phone_label = tk.Label(whatsapp_window, text="Número de Telefone:", bg="#E0F7FA")
     phone_label.pack(pady=5)
     phone_entry = tk.Entry(whatsapp_window, width=30)
@@ -74,7 +71,7 @@ def open_whatsapp_window():
 
     message_label = tk.Label(whatsapp_window, text="Mensagem:", bg="#E0F7FA")
     message_label.pack(pady=5)
-    message_entry = tk.Text(whatsapp_window, width=50, height=5)  # Aumenta o campo de mensagem
+    message_entry = tk.Text(whatsapp_window, width=50, height=5)
     message_entry.pack(pady=5)
 
     time_label = tk.Label(whatsapp_window, text="Horário de Envio (HH:MM):", bg="#E0F7FA")
@@ -86,21 +83,20 @@ def open_whatsapp_window():
         time_value = time_entry.get()
         if len(time_value) == 2 and not time_value.endswith(':'):
             time_entry.insert(tk.END, ':')
-    
+
     time_entry_var = tk.StringVar()
     time_entry_var.trace("w", on_time_entry_change)
     time_entry.config(textvariable=time_entry_var)
 
     def schedule_message():
         phone = phone_entry.get()
-        message = message_entry.get("1.0", tk.END).strip()  # Pega o texto do campo de mensagem
+        message = message_entry.get("1.0", tk.END).strip()
         send_time = time_entry.get()
         send_scheduled_message(phone, message, send_time)
 
-    schedule_button = tk.Button(whatsapp_window, text="Agendar Mensagem", command=schedule_message)
+    schedule_button = tk.Button(whatsapp_window, text="Enviar", command=schedule_message)
     schedule_button.pack(pady=20)
 
-    # Função para selecionar arquivos
     def select_files():
         files = filedialog.askopenfilenames(
             title="Selecione os Arquivos",
@@ -122,14 +118,12 @@ def open_whatsapp_window():
     def send_files():
         files = file_display.get("1.0", tk.END).strip().split('\n')
         if files:
-            for file in files:
-                # Implementar a lógica para enviar os arquivos aqui
-                print(f"Enviando arquivo: {file}")  # Placeholder
+            send_file(files)
+            tk.messagebox.showinfo("Sucesso", "Arquivos enviados com sucesso!")
 
     send_files_button = tk.Button(whatsapp_window, text="Enviar Arquivos", command=send_files)
     send_files_button.pack(pady=5)
 
-# Propriedades para estilização
 button_config = {
     "pushnator": {
         "text": "PUSHNATOR",
@@ -138,7 +132,7 @@ button_config = {
         "font": ("Arial", 15, "bold"),
         "width": 15,
         "height": 2,
-        "position": "left"  # Opções: "left" ou "right"
+        "position": "left"
     },
     "zapbot": {
         "text": "ZAPBOT",
@@ -147,7 +141,7 @@ button_config = {
         "font": ("Arial", 15, "bold"),
         "width": 15,
         "height": 2,
-        "position": "right"  # Opções: "left" ou "right"
+        "position": "right"
     }
 }
 
@@ -156,7 +150,6 @@ root.title("BITBOOP")
 root.geometry("600x500")
 root.configure(bg="#191970")
 
-# Configura e posiciona os botões de acordo com as propriedades
 site_button = tk.Button(
     root,
     text=button_config["pushnator"]["text"],
@@ -181,26 +174,21 @@ whatsapp_button = tk.Button(
 )
 whatsapp_button.grid(row=0, column=1, padx=50, pady=10, sticky="e")
 
-# Carrega e redimensiona a imagem do Pushnator
 pushnator_image_path = "img/Pushnator.png"
 pushnator_image = Image.open(pushnator_image_path)
 pushnator_image = pushnator_image.resize((186, 239), Image.LANCZOS)
 
-# Carrega e redimensiona a imagem do ZapBot
 zapbot_image_path = "img/ZapBot.png"
 zapbot_image = Image.open(zapbot_image_path)
 zapbot_image = zapbot_image.resize((218, 269), Image.LANCZOS)
 
-# Converte as imagens para o formato que o Tkinter pode usar
 pushnator_image_tk = ImageTk.PhotoImage(pushnator_image)
 zapbot_image_tk = ImageTk.PhotoImage(zapbot_image)
 
-# Adiciona a imagem Pushnator abaixo do botão Pushnator
 pushnator_image_label = tk.Label(root, image=pushnator_image_tk, bg="#191970")
 pushnator_image_label.grid(row=1, column=0, padx=10, pady=10)
 
-# Adiciona a imagem ZapBot abaixo do botão ZapBot
 zapbot_image_label = tk.Label(root, image=zapbot_image_tk, bg="#191970")
 zapbot_image_label.grid(row=1, column=1, padx=10, pady=10)
 
-root.mainloop() 
+root.mainloop()
