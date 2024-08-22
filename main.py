@@ -1,8 +1,9 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 from pushnator import save_login_data, load_login_data, execute_site_automation
-from zapbot import send_whatsapp_messages, send_scheduled_message, send_file
+from zapbot import processar_envio
+
 
 def open_site_window():
     site_window = tk.Toplevel(root)
@@ -53,7 +54,11 @@ def open_site_window():
         if save_credentials_var.get():
             save_login_data(username, password)
 
-        execute_site_automation(username, password, directory)
+        try:
+            execute_site_automation(username, password, directory)
+            messagebox.showinfo("Sucesso", "Automação concluída com sucesso!")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
 
     execute_button = tk.Button(site_window, text="LOGIN", command=execute_automation)
     execute_button.pack(pady=10)
@@ -78,26 +83,8 @@ def open_whatsapp_window():
     time_label.pack(pady=5)
     time_entry = tk.Entry(whatsapp_window, width=10)
     time_entry.pack(pady=5)
-    
-    def on_time_entry_change(*args):
-        time_value = time_entry.get()
-        if len(time_value) == 2 and not time_value.endswith(':'):
-            time_entry.insert(tk.END, ':')
 
-    time_entry_var = tk.StringVar()
-    time_entry_var.trace("w", on_time_entry_change)
-    time_entry.config(textvariable=time_entry_var)
-
-    def schedule_message():
-        phone = phone_entry.get()
-        message = message_entry.get("1.0", tk.END).strip()
-        send_time = time_entry.get()
-        send_scheduled_message(phone, message, send_time)
-
-    schedule_button = tk.Button(whatsapp_window, text="Enviar", command=schedule_message)
-    schedule_button.pack(pady=20)
-
-    def select_files():
+    def select_files(file_display):
         files = filedialog.askopenfilenames(
             title="Selecione os Arquivos",
             filetypes=[("All Files", "*.*"), ("PDF Files", "*.pdf"), ("PNG Files", "*.png"), ("JPG Files", "*.jpg"), ("Word Documents", "*.docx"), ("Excel Files", "*.xlsx")]
@@ -109,20 +96,39 @@ def open_whatsapp_window():
             file_display.insert(tk.END, file_paths)
             file_display.config(state="disabled")
 
-    select_files_button = tk.Button(whatsapp_window, text="Selecionar Arquivos", command=select_files)
+    def send_files(file_display):
+        files = file_display.get("1.0", tk.END).strip().split('\n')
+        if files:
+            # Adaptar esta função se necessário
+            pass
+
+    def enviar_mensagem():
+        phone_number = phone_entry.get()
+        message = message_entry.get("1.0", tk.END).strip()
+        media_path = file_display.get("1.0", tk.END).strip()
+        if not phone_number or not message:
+            messagebox.showerror("Erro", "Número de telefone e mensagem são obrigatórios.")
+            return
+        processar_envio(phone_number, message, media_path)
+        messagebox.showinfo("Sucesso", "Mensagem e mídia enviadas com sucesso!")
+
+    schedule_button = tk.Button(whatsapp_window, text="Enviar", command=enviar_mensagem)
+    schedule_button.pack(pady=20)
+
+    select_files_button = tk.Button(whatsapp_window, text="Selecionar Arquivos", command=lambda: select_files(file_display))
     select_files_button.pack(pady=5)
 
     file_display = tk.Text(whatsapp_window, height=8, width=50, state="disabled", wrap="word")
     file_display.pack(pady=5)
 
-    def send_files():
-        files = file_display.get("1.0", tk.END).strip().split('\n')
-        if files:
-            send_file(files)
-            tk.messagebox.showinfo("Sucesso", "Arquivos enviados com sucesso!")
-
-    send_files_button = tk.Button(whatsapp_window, text="Enviar Arquivos", command=send_files)
+    send_files_button = tk.Button(whatsapp_window, text="Enviar Arquivos", command=lambda: send_files(file_display))
     send_files_button.pack(pady=5)
+
+# Cria a janela principal apenas uma vez
+root = tk.Tk()
+root.title("BITBOOP")
+root.geometry("600x500")
+root.configure(bg="#191970")
 
 button_config = {
     "pushnator": {
@@ -144,11 +150,6 @@ button_config = {
         "position": "right"
     }
 }
-
-root = tk.Tk()
-root.title("BITBOOP")
-root.geometry("600x500")
-root.configure(bg="#191970")
 
 site_button = tk.Button(
     root,

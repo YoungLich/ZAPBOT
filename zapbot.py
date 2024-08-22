@@ -1,22 +1,20 @@
+import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.keys import Keys  
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from urllib.parse import quote
-import time
-import pytz
-from datetime import datetime
-import logging
 import os
+import time
 
+# Configura o logging
 logging.basicConfig(level=logging.INFO)
 
+# Função para configurar o driver do Chrome com persistência de sessão
 def get_driver():
-    chrome_options = Options()
+    chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
@@ -26,13 +24,14 @@ def get_driver():
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument("--disable-infobars")
     
-    # Use a user profile to persist session data
+    # Persistência da sessão usando um diretório de dados do usuário
     user_data_dir = os.path.expanduser("~") + "/.chrome_user_data"
     chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     return driver
 
+# Função para aguardar o escaneamento do QR code
 def wait_for_qr_scan(driver):
     try:
         WebDriverWait(driver, 180).until(
@@ -43,127 +42,89 @@ def wait_for_qr_scan(driver):
         logging.error("Erro ao esperar o escaneamento do QR code: " + str(e))
         driver.quit()
 
+# Função para iniciar o WhatsApp Web
+def start_whatsapp(driver):
+    logging.info("Abrindo o WhatsApp Web...")
+    driver.get('https://web.whatsapp.com/')
+    wait_for_qr_scan(driver)
+
+# Função para buscar um contato ou grupo
 def buscar_contato(driver, contato):
     try:
-        search_box = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"copyable-text selectable-text")]'))
+        logging.info(f"Buscando o contato: {contato}")
+        campo_pesquisa = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "div[contenteditable='true']"))
         )
-        search_box.click()
-        search_box.send_keys(contato)
-        search_box.send_keys(Keys.ENTER)
+        campo_pesquisa.click()
+        campo_pesquisa.send_keys(contato)
+        campo_pesquisa.send_keys(Keys.ENTER)
     except Exception as e:
-        logging.error(f"Erro ao buscar contato: {str(e)}")
+        logging.error(f"Erro ao buscar contato: {e}")
 
-def enviar_mensagem(driver, mensagem, contato, mensagem2):
+# Função para enviar uma mensagem de texto
+def enviar_mensagem(driver, mensagem):
     try:
-        message_box = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"copyable-text selectable-text")]'))
+        logging.info("Enviando mensagem...")
+        campo_mensagem = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "div[contenteditable='true'][data-tab='10']"))
         )
-        message_box.click()
-        time.sleep(3)
-        message_box.send_keys(f"{mensagem} {contato} {mensagem2}")
-        message_box.send_keys(Keys.ENTER)
+        campo_mensagem.click()
+        time.sleep(2)
+        campo_mensagem.send_keys(mensagem)
+        campo_mensagem.send_keys(Keys.ENTER)
     except Exception as e:
-        logging.error(f"Erro ao enviar mensagem: {str(e)}")
+        logging.error(f"Erro ao enviar mensagem: {e}")
 
+# Função para enviar mídia
+# Função para enviar mídia
 def enviar_midia(driver, midia):
     try:
-        attach_button = WebDriverWait(driver, 30).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "span[data-icon='clip']"))
+        logging.info("Iniciando o envio de mídia...")
+        
+        # Clicar no botão de anexo
+        attach_button = WebDriverWait(driver, 20).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "span[data-icon='plus']"))
         )
         attach_button.click()
-        file_input = WebDriverWait(driver, 30).until(
+        
+        # Selecionar o arquivo de mídia
+        attach_input = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "input[type='file']"))
         )
-        file_input.send_keys(midia)
-        time.sleep(3)
-        send_button = WebDriverWait(driver, 30).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "span[data-icon='send']"))
-        )
-        send_button.click()
-    except Exception as e:
-        logging.error(f"Erro ao enviar mídia: {str(e)}")
-
-def send_scheduled_message(phone, message, send_time):
-    brt = pytz.timezone('America/Sao_Paulo')
-    send_time = datetime.strptime(send_time, '%H:%M').replace(tzinfo=brt)
-
-    while True:
-        now = datetime.now(brt)
-        if now >= send_time:
-            break
-        time.sleep(30)
-
-    driver = get_driver()
-    driver.get('https://web.whatsapp.com/')
-    
-    wait_for_qr_scan(driver)  # Aguarda o QR code ser escaneado antes de prosseguir
-
-    try:
-        driver.get(f'https://web.whatsapp.com/send?phone={phone}&text={quote(message)}')
-        time.sleep(15)
-
-        text_box = WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div[2]/div[4]/div/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div/p'))
-        )
-        text_box.send_keys(message)
+        attach_input.send_keys(midia)
+        logging.info(f"Mídia {midia} selecionada. Aguardando o upload...")
         
-        send_button = WebDriverWait(driver, 30).until(
-            EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div/div[2]/div[4]/div/footer/div[1]/div/span[2]/div/div[2]/div[2]/button/span'))
+        # Aguardar o upload e o botão de envio ficar disponível
+        time.sleep(5)  # Ajuste conforme necessário
+        
+        # Garantir que o botão de envio esteja visível e clicável
+        send_button = WebDriverWait(driver, 20).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, "span[data-icon='send']"))
         )
         send_button.click()
-        logging.info(f"Mensagem enviada para {phone} com sucesso!")
-        time.sleep(5)
+        time.sleep(3)
+        # Usar JavaScript para clicar no botão de envio
+        driver.execute_script("arguments[0].click();", send_button)
+        logging.info("Mídia enviada com sucesso.")
     except Exception as e:
-        logging.error(f'Erro ao enviar a mensagem: {str(e)}')
-    finally:
-        driver.quit()
+        logging.error(f"Erro ao enviar mídia: {e}")
 
-def send_file(phone, file_paths):
-    driver = get_driver()
-    driver.get('https://web.whatsapp.com/')
-    
-    wait_for_qr_scan(driver)  # Aguarda o QR code ser escaneado antes de prosseguir
-
+# Função principal para processar o envio
+def processar_envio(phone_number, message, media_path=None):
     try:
-        for file_path in file_paths:
-            driver.get(f'https://web.whatsapp.com/send?phone={phone}')
-            time.sleep(15)
+        driver = get_driver()
+        start_whatsapp(driver)
 
-            attach_button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "span[data-icon='clip']"))
-            )
-            attach_button.click()
-            time.sleep(2)
+        buscar_contato(driver, phone_number)
+        enviar_mensagem(driver, message)
 
-            file_input = WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "input[type='file']"))
-            )
-            file_input.send_keys(file_path)
-            time.sleep(5)
+        if media_path:
+            enviar_midia(driver, media_path)
 
-            send_button = WebDriverWait(driver, 30).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "span[data-icon='send']"))
-            )
-            send_button.click()
-            time.sleep(5)
+        driver.quit()  # Fecha o navegador
+
     except Exception as e:
-        logging.error(f'Erro ao enviar o arquivo: {str(e)}')
-    finally:
-        driver.quit()
+        logging.error(f"Erro geral no processamento de envio: {e}")
 
-
-def send_whatsapp_messages(phone, message, message2):
-    driver = get_driver()
-    driver.get('https://web.whatsapp.com/')
-    
-    wait_for_qr_scan(driver)  # Aguarda o QR code ser escaneado antes de prosseguir
-
-    try:
-        buscar_contato(driver, phone)
-        time.sleep(5)
-        enviar_mensagem(driver, message, phone, message2)
-    except Exception as e:
-        logging.error(f'Erro ao enviar a mensagem: {str(e)}')
-    finally:
-        driver.quit()
+# Exemplo de uso
+# processar_envio("Número de Telefone", "Sua mensagem", "Caminho/para/midia")
