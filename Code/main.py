@@ -1,26 +1,26 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
-from pushnator import save_login_data, load_login_data, execute_site_automation
+from pushnator_incluir import save_login_data, load_login_data, execute_site_automation
+from pushnator_excluir import excluir_processos  # Ajustado para importar apenas funções existentes
 from zapbot import processar_envio
-
 
 #------------Pushnator------------#
 
-def open_site_window():
-    site_window = tk.Toplevel(root)
-    site_window.title("PUSHNATOR")
-    site_window.geometry("600x300")
-    site_window.configure(bg="#F0F0F0")
+def show_login_window(action):
+    login_window = tk.Toplevel(root)
+    login_window.title("Login PUSHNATOR")
+    login_window.geometry("600x300")
+    login_window.configure(bg="#F0F0F0")
 
-    username_label = tk.Label(site_window, text="CPF/CNPJ:", bg="#F0F0F0")
+    username_label = tk.Label(login_window, text="CPF/CNPJ:", bg="#F0F0F0")
     username_label.pack(pady=5)
-    username_entry = tk.Entry(site_window, width=50)
+    username_entry = tk.Entry(login_window, width=50)
     username_entry.pack(pady=5)
 
-    password_label = tk.Label(site_window, text="Senha:", bg="#F0F0F0")
+    password_label = tk.Label(login_window, text="Senha:", bg="#F0F0F0")
     password_label.pack(pady=5)
-    password_entry = tk.Entry(site_window, width=50, show="*")
+    password_entry = tk.Entry(login_window, width=50, show="*")
     password_entry.pack(pady=5)
 
     saved_username, saved_password = load_login_data()
@@ -38,14 +38,14 @@ def open_site_window():
             directory_display.config(state="disabled")
 
     directory_var = tk.StringVar()
-    directory_button = tk.Button(site_window, text="Selecionar Diretório", command=select_directory)
+    directory_button = tk.Button(login_window, text="Selecionar Diretório", command=select_directory)
     directory_button.pack(pady=5)
 
-    directory_display = tk.Text(site_window, height=2, width=50, state="disabled", wrap="word")
+    directory_display = tk.Text(login_window, height=2, width=50, state="disabled", wrap="word")
     directory_display.pack(pady=5)
 
     save_credentials_var = tk.IntVar()
-    save_credentials_check = tk.Checkbutton(site_window, text="Salvar credenciais", variable=save_credentials_var, bg="#F0F0F0")
+    save_credentials_check = tk.Checkbutton(login_window, text="Salvar credenciais", variable=save_credentials_var, bg="#F0F0F0")
     save_credentials_check.pack(pady=10)
 
     def execute_automation():
@@ -57,13 +57,34 @@ def open_site_window():
             save_login_data(username, password)
 
         try:
-            execute_site_automation(username, password, directory)
+            if action == "incluir":
+                execute_site_automation(username, password, directory)
+            elif action == "excluir":
+                excluir_processos(username, password, directory)  # Chamada correta da função
             messagebox.showinfo("Sucesso", "Automação concluída com sucesso!")
         except Exception as e:
             messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
 
-    execute_button = tk.Button(site_window, text="LOGIN", command=execute_automation)
+    execute_button = tk.Button(login_window, text="Executar", command=execute_automation)
     execute_button.pack(pady=10)
+
+def open_inclusion_exclusion_window():
+    inclusion_exclusion_window = tk.Toplevel(root)
+    inclusion_exclusion_window.title("Incluir/Excluir Processos")
+    inclusion_exclusion_window.geometry("400x200")
+    inclusion_exclusion_window.configure(bg="#F0F0F0")
+
+    def include_processes():
+        show_login_window("incluir")
+
+    def exclude_processes():
+        show_login_window("excluir")
+
+    include_button = tk.Button(inclusion_exclusion_window, text="Incluir Processos", command=include_processes)
+    include_button.pack(pady=20)
+
+    exclude_button = tk.Button(inclusion_exclusion_window, text="Excluir Processos", command=exclude_processes)
+    exclude_button.pack(pady=20)
 
 #------------ZapBot------------#
 
@@ -172,32 +193,27 @@ def open_whatsapp_window():
         media_path = file_display.get("1.0", tk.END).strip()
         
         if not selected_contacts or not message:
-            messagebox.showerror("Erro", "Contatos e mensagem são obrigatórios.")
+            messagebox.showerror("Erro", "Por favor, selecione contatos e insira uma mensagem.")
             return
-        
-        try:
-            for contact in selected_contacts:
-                processar_envio(contact, message, media_path)
-            messagebox.showinfo("Sucesso", "Mensagem e mídia enviadas com sucesso!")
-        except Exception as e:
-            messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
 
-    enviar_button = tk.Button(whatsapp_window, text="Enviar", command=enviar_mensagem)
-    enviar_button.pack(pady=20)
+        for contact in selected_contacts:
+            processar_envio(contact, message, media_path)
+        messagebox.showinfo("Sucesso", "Mensagens enviadas com sucesso!")
+
+    send_button = tk.Button(whatsapp_window, text="Enviar Mensagem", command=enviar_mensagem)
+    send_button.pack(pady=10)
+
+    file_display = tk.Text(whatsapp_window, height=5, width=50, state="disabled", wrap="word")
+    file_display.pack(pady=5)
 
     select_files_button = tk.Button(whatsapp_window, text="Selecionar Arquivos", command=lambda: select_files(file_display))
     select_files_button.pack(pady=5)
 
-    file_display = tk.Text(whatsapp_window, height=8, width=50, state="disabled", wrap="word")
-    file_display.pack(pady=5)
+#------------Main Window------------#
 
-    send_files_button = tk.Button(whatsapp_window, text="Enviar Arquivos", command=lambda: send_files(file_display))
-    send_files_button.pack(pady=5)
-
-# Cria a janela principal apenas uma vez
 root = tk.Tk()
 root.title("BITBOOP")
-root.geometry("600x500")
+root.geometry("580x380")
 root.configure(bg="#191970")
 
 button_config = {
@@ -221,10 +237,13 @@ button_config = {
     }
 }
 
+def open_pushnator_window():
+    open_inclusion_exclusion_window()
+
 site_button = tk.Button(
     root,
     text=button_config["pushnator"]["text"],
-    command=open_site_window,
+    command=open_pushnator_window,
     bg=button_config["pushnator"]["bg_color"],
     fg=button_config["pushnator"]["fg_color"],
     font=button_config["pushnator"]["font"],
@@ -247,10 +266,12 @@ whatsapp_button.grid(row=0, column=1, padx=50, pady=10, sticky="e")
 
 pushnator_image_path = "img/Pushnator.png"
 pushnator_image = Image.open(pushnator_image_path)
+pushnator_image_tk = ImageTk.PhotoImage(pushnator_image)
 pushnator_image = pushnator_image.resize((186, 239), Image.LANCZOS)
 
 zapbot_image_path = "img/ZapBot.png"
 zapbot_image = Image.open(zapbot_image_path)
+zapbot_image_tk = ImageTk.PhotoImage(zapbot_image)
 zapbot_image = zapbot_image.resize((218, 269), Image.LANCZOS)
 
 pushnator_image_tk = ImageTk.PhotoImage(pushnator_image)
