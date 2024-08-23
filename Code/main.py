@@ -9,7 +9,7 @@ from zapbot import processar_envio
 
 def show_login_window(action):
     login_window = tk.Toplevel(root)
-    login_window.title("Login PUSHNATOR")
+    login_window.title("PUSHNATOR")
     login_window.geometry("600x300")
     login_window.configure(bg="#F0F0F0")
 
@@ -88,14 +88,22 @@ def open_inclusion_exclusion_window():
 
 #------------ZapBot------------#
 
+def format_time(event):
+    time_str = time_entry.get()
+    if len(time_str) == 4 and time_str.isdigit():
+        formatted_time = f"{time_str[:2]}:{time_str[2:]}"
+        time_entry.delete(0, tk.END)
+        time_entry.insert(0, formatted_time)
+
 def open_whatsapp_window():
     global whatsapp_window  # Declare whatsapp_window as global
+    global time_entry  # Declare time_entry como global
     whatsapp_window = tk.Toplevel(root)
     whatsapp_window.title("ZAPBOT")
     whatsapp_window.geometry("600x600")
-    whatsapp_window.configure(bg="#E0F7FA")
+    whatsapp_window.configure(bg="#5eb294")
 
-    contact_label = tk.Label(whatsapp_window, text="Nome do Contato:", bg="#E0F7FA")
+    contact_label = tk.Label(whatsapp_window, text="Nome do Contato:", bg="#5eb294")
     contact_label.pack(pady=5)
     contact_entry = tk.Entry(whatsapp_window, width=30)
     contact_entry.pack(pady=5)
@@ -159,15 +167,17 @@ def open_whatsapp_window():
     contacts_display = tk.Entry(whatsapp_window, textvariable=contacts_var, width=50, state="readonly")
     contacts_display.pack(pady=5)
 
-    message_label = tk.Label(whatsapp_window, text="Mensagem:", bg="#E0F7FA")
+    message_label = tk.Label(whatsapp_window, text="Mensagem:", bg="#5eb294")
     message_label.pack(pady=5)
     message_entry = tk.Text(whatsapp_window, width=50, height=5)
     message_entry.pack(pady=5)
 
-    time_label = tk.Label(whatsapp_window, text="Horário de Envio (HH:MM):", bg="#E0F7FA")
+    time_label = tk.Label(whatsapp_window, text="Horário de Envio (HH:MM):", bg="#5eb294")
     time_label.pack(pady=5)
     time_entry = tk.Entry(whatsapp_window, width=10)
     time_entry.pack(pady=5)
+
+    time_entry.bind("<KeyRelease>", format_time)  # Vincula a função de formatação
 
     def select_files(file_display):
         files = filedialog.askopenfilenames(
@@ -214,7 +224,10 @@ def open_whatsapp_window():
 root = tk.Tk()
 root.title("BITBOOP")
 root.geometry("580x380")
-root.configure(bg="#191970")
+root.configure(bg="#202a50")
+
+# Impede que a janela seja redimensionada
+root.resizable(False, False)
 
 button_config = {
     "pushnator": {
@@ -277,10 +290,10 @@ zapbot_image = zapbot_image.resize((218, 269), Image.LANCZOS)
 pushnator_image_tk = ImageTk.PhotoImage(pushnator_image)
 zapbot_image_tk = ImageTk.PhotoImage(zapbot_image)
 
-pushnator_image_label = tk.Label(root, image=pushnator_image_tk, bg="#191970")
+pushnator_image_label = tk.Label(root, image=pushnator_image_tk, bg="#202a50")
 pushnator_image_label.grid(row=1, column=0, padx=10, pady=10)
 
-zapbot_image_label = tk.Label(root, image=zapbot_image_tk, bg="#191970")
+zapbot_image_label = tk.Label(root, image=zapbot_image_tk, bg="#202a50")
 zapbot_image_label.grid(row=1, column=1, padx=10, pady=10)
 
 root.mainloop()
