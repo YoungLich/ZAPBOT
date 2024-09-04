@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 from pushnator_incluir import save_login_data, load_login_data, execute_site_automation
-from pushnator_excluir import excluir_processos  # Ajustado para importar apenas funções existentes
+from pushnator_excluir import excluir_processos, execute_site_automation  # Ajustado para importar apenas funções existentes
 from zapbot import processar_envio
 
 #------------Pushnator------------#
@@ -129,6 +129,17 @@ def open_whatsapp_window():
         except FileNotFoundError:
             return []
 
+    def delete_contact(selected_contact):
+        contacts = load_contacts()
+        if selected_contact in contacts:
+            contacts.remove(selected_contact)
+            with open("saved_contacts.txt", "w") as f:
+                for contact in contacts:
+                    f.write(contact + "\n")
+            messagebox.showinfo("Sucesso", "Contato excluído com sucesso!")
+        else:
+            messagebox.showerror("Erro", "Contato não encontrado.")
+    
     def select_contacts():
         contacts = load_contacts()
         if not contacts:
@@ -143,7 +154,7 @@ def open_whatsapp_window():
         for contact in contacts:
             contact_listbox.insert(tk.END, contact)
         contact_listbox.pack(pady=10)
-        
+
         def confirm_selection():
             selected_indices = contact_listbox.curselection()
             if len(selected_indices) > 10:
@@ -156,9 +167,21 @@ def open_whatsapp_window():
                 select_window.destroy()
             else:
                 messagebox.showinfo("Nenhum Contato Selecionado", "Nenhum contato foi selecionado.")
+        
+        def delete_selected_contact():
+            selected_index = contact_listbox.curselection()
+            if selected_index:
+                selected_contact = contacts[selected_index[0]]
+                delete_contact(selected_contact)
+                contact_listbox.delete(selected_index)
+            else:
+                messagebox.showwarning("Nenhum Selecionado", "Selecione um contato para excluir.")
 
         confirm_button = tk.Button(select_window, text="Confirmar", command=confirm_selection)
         confirm_button.pack(pady=5)
+
+        delete_button = tk.Button(select_window, text="Excluir Contato", command=delete_selected_contact)
+        delete_button.pack(pady=5)
 
     select_contacts_button = tk.Button(whatsapp_window, text="Selecionar Contatos", command=select_contacts)
     select_contacts_button.pack(pady=5)
@@ -190,12 +213,6 @@ def open_whatsapp_window():
             file_display.delete(1.0, tk.END)
             file_display.insert(tk.END, file_paths)
             file_display.config(state="disabled")
-
-    def send_files(file_display):
-        files = file_display.get("1.0", tk.END).strip().split('\n')
-        if files:
-            # Adaptar esta função se necessário
-            pass
 
     def enviar_mensagem():
         selected_contacts = contacts_var.get().split(', ')

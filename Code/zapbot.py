@@ -71,6 +71,7 @@ def enviar_mensagem(driver, mensagem):
         campo_mensagem.click()
         campo_mensagem.send_keys(mensagem)
         campo_mensagem.send_keys(Keys.ENTER)
+        time.sleep(4)
         logging.info("Mensagem enviada com sucesso.")
     except Exception as e:
         logging.error(f"Erro ao enviar mensagem: {e}")
