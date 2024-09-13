@@ -12,6 +12,13 @@ from pathlib import Path
 import json
 import sys
 
+# Função para formatar o número do processo
+def formatar_processo(proc):
+    s = ''.join(filter(str.isdigit, proc))
+    if len(s) < 20:
+        s = s.zfill(20)
+    return f"{s[:7]}-{s[7:9]}.{s[9:13]}.{s[13:14]}.{s[14:16]}.{s[16:20]}"
+
 def save_login_data(username, password):
     data = {"username": username, "password": password}
     with open("login_data.json", "w") as file:

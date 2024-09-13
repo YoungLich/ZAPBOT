@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 from pushnator_incluir import save_login_data, load_login_data, execute_site_automation
-from pushnator_excluir import excluir_processos, execute_site_automation  # Ajustado para importar apenas funções existentes
+from pushnator_excluir import excluir_processos  # Remover execute_site_automation
 from zapbot import processar_envio
 
 #------------Pushnator------------#
