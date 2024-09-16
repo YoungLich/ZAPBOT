@@ -100,8 +100,8 @@ def automatizar_pje(username, password, processos_planilha, caminho_resultado):
 
 if __name__ == "__main__":
     # Substitua pelo caminho da sua planilha
-    caminho_planilha = 'C:/Users/52312819805/Desktop/BITBOOP/Code/delete_push.xlsx'
-    caminho_resultado = 'C:/Users/52312819805/Desktop/BITBOOP/Code/resultado_exclusao_processos.xlsx'
+    caminho_planilha = 'C:/Users/52312819805/Desktop/BITBOOP/Code/Excluir_Push.xlsx'
+    caminho_resultado = 'C:/Users/52312819805/Desktop/BITBOOP/output/Excluidos/resultado_exclusao_processos.xlsx'
     
     # Carregar processos da planilha
     processos_planilha = carregar_processos(caminho_planilha)
