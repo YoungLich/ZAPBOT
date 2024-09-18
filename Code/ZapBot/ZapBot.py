@@ -1,89 +1,21 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
-from pushnator_incluir import save_login_data, load_login_data, execute_site_automation
-from pushnator_excluir import excluir_processos
-from zapbot import processar_envio
+from zapbot_code import processar_envio
 
-# ------------Pushnator------------#
+# ------------Configurações do Botão------------#
 
-def show_login_window(action):
-    login_window = tk.Toplevel(root)
-    login_window.title("PUSHNATOR")
-    login_window.geometry("600x350")
-    login_window.configure(bg="#F0F0F0")
-
-    username_label = tk.Label(login_window, text="CPF/CNPJ:", bg="#F0F0F0")
-    username_label.pack(pady=5)
-    username_entry = tk.Entry(login_window, width=50)
-    username_entry.pack(pady=5)
-
-    password_label = tk.Label(login_window, text="Senha:", bg="#F0F0F0")
-    password_label.pack(pady=5)
-    password_entry = tk.Entry(login_window, width=50, show="*")
-    password_entry.pack(pady=5)
-
-    saved_username, saved_password = load_login_data()
-    if saved_username and saved_password:
-        username_entry.insert(0, saved_username)
-        password_entry.insert(0, saved_password)
-
-    if action == "incluir":
-        result_path = r"C:\Users\52312819805\Desktop\BITBOOP\output\Incluidos"
-        planilha_path = r"C:\Users\52312819805\Desktop\BITBOOP\Code\Inserir_Push.xlsx"
-    elif action == "excluir":
-        result_path = r"C:\Users\52312819805\Desktop\BITBOOP\output\Excluidos"
-        planilha_path = r"C:\Users\52312819805\Desktop\BITBOOP\Code\Excluir_Push.xlsx"
-
-    result_label = tk.Label(login_window, text="Caminho do arquivo de resultado:", bg="#F0F0F0")
-    result_label.pack(pady=5)
-
-    result_display = tk.Text(login_window, height=2, width=50, state="disabled", wrap="word")
-    result_display.pack(pady=5)
-    result_display.config(state="normal")
-    result_display.insert(tk.END, result_path)
-    result_display.config(state="disabled")
-
-    save_credentials_var = tk.IntVar()
-    save_credentials_check = tk.Checkbutton(login_window, text="Salvar credenciais", variable=save_credentials_var, bg="#F0F0F0")
-    save_credentials_check.pack(pady=10)
-
-    def execute_automation():
-        username = username_entry.get()
-        password = password_entry.get()
-
-        if save_credentials_var.get():
-            save_login_data(username, password)
-
-        try:
-            if action == "incluir":
-                execute_site_automation(username, password, result_path)
-            elif action == "excluir":
-                excluir_processos(username, password, planilha_path, result_path)
-            messagebox.showinfo("Sucesso", "Automação concluída com sucesso!")
-        except Exception as e:
-            messagebox.showerror("Erro", f"Ocorreu um erro: {e}")
-
-    execute_button = tk.Button(login_window, text="Executar", command=execute_automation)
-    execute_button.pack(pady=10)
-
-def open_inclusion_exclusion_window():
-    inclusion_exclusion_window = tk.Toplevel(root)
-    inclusion_exclusion_window.title("Incluir/Excluir Processos")
-    inclusion_exclusion_window.geometry("400x200")
-    inclusion_exclusion_window.configure(bg="#F0F0F0")
-
-    def include_processes():
-        show_login_window("incluir")
-
-    def exclude_processes():
-        show_login_window("excluir")
-
-    include_button = tk.Button(inclusion_exclusion_window, text="Incluir Processos", command=include_processes)
-    include_button.pack(pady=20)
-
-    exclude_button = tk.Button(inclusion_exclusion_window, text="Excluir Processos", command=exclude_processes)
-    exclude_button.pack(pady=20)
+button_config = {
+    "zapbot": {
+        "text": "ZAPBOT",
+        "bg_color": "#3CB371",
+        "fg_color": "black",
+        "font": ("Arial", 15, "bold"),
+        "width": 15,
+        "height": 2,
+        "position": "center"
+    }
+}
 
 # ------------ZapBot------------#
 
@@ -235,10 +167,10 @@ def open_whatsapp_window():
     select_files_button = tk.Button(whatsapp_window, text="Selecionar Arquivos", command=lambda: select_files(file_display))
     select_files_button.pack(pady=5)
 
-# ------------Main Window------------#
+# ------------Janela Principal------------#
 
 root = tk.Tk()
-root.title("BITBOOP")
+root.title("ZAPBOT")
 root.geometry("580x380")
 root.configure(bg="#202a50")
 
@@ -246,15 +178,6 @@ root.configure(bg="#202a50")
 root.resizable(False, False)
 
 button_config = {
-    "pushnator": {
-        "text": "PUSHNATOR",
-        "bg_color": "black",
-        "fg_color": "white",
-        "font": ("Arial", 15, "bold"),
-        "width": 15,
-        "height": 2,
-        "position": "left"
-    },
     "zapbot": {
         "text": "ZAPBOT",
         "bg_color": "#3CB371",
@@ -262,52 +185,41 @@ button_config = {
         "font": ("Arial", 15, "bold"),
         "width": 15,
         "height": 2,
-        "position": "right"
+        "position": "center"
     }
 }
 
-def open_pushnator_window():
-    open_inclusion_exclusion_window()
+def open_zapbot_window():
+    open_whatsapp_window()
 
-site_button = tk.Button(
-    root,
-    text=button_config["pushnator"]["text"],
-    command=open_pushnator_window,
-    bg=button_config["pushnator"]["bg_color"],
-    fg=button_config["pushnator"]["fg_color"],
-    font=button_config["pushnator"]["font"],
-    width=button_config["pushnator"]["width"],
-    height=button_config["pushnator"]["height"]
-)
-site_button.grid(row=0, column=0, padx=50, pady=10, sticky="w")
-
-whatsapp_button = tk.Button(
+# Centralizar o botão na grid
+zapbot_button = tk.Button(
     root,
     text=button_config["zapbot"]["text"],
-    command=open_whatsapp_window,
+    command=open_zapbot_window,
     bg=button_config["zapbot"]["bg_color"],
     fg=button_config["zapbot"]["fg_color"],
     font=button_config["zapbot"]["font"],
     width=button_config["zapbot"]["width"],
     height=button_config["zapbot"]["height"]
 )
-whatsapp_button.grid(row=0, column=1, padx=50, pady=10, sticky="e")
 
-# Corrigido: redimensionamento antes da conversão para ImageTk.PhotoImage
-pushnator_image_path = "img/Pushnator.png"
-pushnator_image = Image.open(pushnator_image_path)
-pushnator_image = pushnator_image.resize((186, 239), Image.LANCZOS)
-pushnator_image_tk = ImageTk.PhotoImage(pushnator_image)
+# Corrigido: Centralizando o botão e a imagem na grid
+zapbot_button.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
+# Redimensiona a imagem antes de convertê-la para ImageTk.PhotoImage
 zapbot_image_path = "img/ZapBot.png"
 zapbot_image = Image.open(zapbot_image_path)
-zapbot_image = zapbot_image.resize((218, 269), Image.LANCZOS)
+zapbot_image = zapbot_image.resize((186, 239), Image.LANCZOS)
 zapbot_image_tk = ImageTk.PhotoImage(zapbot_image)
 
-pushnator_image_label = tk.Label(root, image=pushnator_image_tk, bg="#202a50")
-pushnator_image_label.grid(row=1, column=0, padx=10, pady=10)
-
 zapbot_image_label = tk.Label(root, image=zapbot_image_tk, bg="#202a50")
+
 zapbot_image_label.grid(row=1, column=1, padx=10, pady=10)
+
+# Configura a grid para expandir e encher o espaço
+root.grid_rowconfigure(0, weight=1)
+root.grid_rowconfigure(1, weight=1)
+root.grid_columnconfigure(1, weight=1)
 
 root.mainloop()
