@@ -1,6 +1,5 @@
 Selenium
 Openpyxl
 Pathlib
-Pyautogui
-Pillow
 Pandas
+NumPy

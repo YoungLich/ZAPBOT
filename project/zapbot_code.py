@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import os
 import time
+import re
 
 # Configura o logging
 logging.basicConfig(level=logging.INFO)
@@ -47,17 +48,31 @@ def start_whatsapp(driver):
     driver.get('https://web.whatsapp.com/')
     wait_for_qr_scan(driver)
 
+# Função para limpar caracteres especiais do nome do contato
+def limpar_nome_contato(nome):
+    # Remove caracteres especiais e espaços extras
+    return re.sub(r'[^\w\s]', '', nome).strip()
+
 # Função para buscar um contato ou grupo
 def buscar_contato(driver, contato):
     try:
+        contato = limpar_nome_contato(contato)
         logging.info(f"Buscando o contato: {contato}")
+        
+        # Localizar o campo de pesquisa
         campo_pesquisa = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "div[contenteditable='true']"))
         )
         campo_pesquisa.click()
+        campo_pesquisa.clear()  # Limpar o campo de pesquisa antes de digitar
         campo_pesquisa.send_keys(contato)
-        time.sleep(1)  # Pequena pausa para garantir que o contato seja encontrado
-        campo_pesquisa.send_keys(Keys.ENTER)
+        time.sleep(2)  # Pausa para garantir que o contato seja encontrado
+
+        # Verificar se o contato foi encontrado e selecionado
+        contato_elemento = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, f'//span[@title="{contato}"]'))
+        )
+        contato_elemento.click()
     except Exception as e:
         logging.error(f"Erro ao buscar contato: {e}")
 
@@ -109,8 +124,9 @@ def carregar_contatos_salvos():
     try:
         with open("saved_contacts.txt", "r") as file:
             for line in file:
-                name, number = line.strip().split(",")
-                contatos[name.strip()] = number.strip()
+                if "," in line:
+                    name, number = line.strip().split(",", 1)
+                    contatos[name.strip()] = number.strip()
     except FileNotFoundError:
         logging.warning("Arquivo de contatos salvos não encontrado.")
     except Exception as e:
@@ -118,32 +134,38 @@ def carregar_contatos_salvos():
     return contatos
 
 # Função principal para processar o envio
-def processar_envio(contact_name_or_number, message, media_path=None):
+def processar_envio(contact_names_or_numbers, message, media_path=None):
+    if len(contact_names_or_numbers) > 50:
+        logging.error("O número máximo de contatos é 50.")
+        return
+
     try:
         # Carregar contatos salvos
         contatos_salvos = carregar_contatos_salvos()
 
-        # Se o nome do contato for fornecido, use o número correspondente
-        if contact_name_or_number in contatos_salvos:
-            phone_number = contatos_salvos[contact_name_or_number]
-            logging.info(f"Nome do contato encontrado: {contact_name_or_number} -> {phone_number}")
-        else:
-            phone_number = contact_name_or_number
-            logging.info(f"Usando número de telefone direto: {phone_number}")
-
         driver = get_driver()
         start_whatsapp(driver)
 
-        buscar_contato(driver, phone_number)
-        enviar_mensagem(driver, message)
+        for contact_name_or_number in contact_names_or_numbers:
+            if contact_name_or_number in contatos_salvos:
+                phone_number = contatos_salvos[contact_name_or_number]
+                logging.info(f"Nome do contato encontrado: {contact_name_or_number} -> {phone_number}")
+            else:
+                phone_number = contact_name_or_number
+                logging.info(f"Usando número de telefone direto: {phone_number}")
 
-        if media_path:
-            enviar_midia(driver, media_path)
+            buscar_contato(driver, phone_number)
+            enviar_mensagem(driver, message)
 
-        driver.quit()  # Fecha o navegador
-
+            if media_path:
+                enviar_midia(driver, media_path)
+        
+        # Fechar o navegador se apenas um contato for selecionado
+        if len(contact_names_or_numbers) == 1:
+            driver.quit()  # Fecha o navegador
+        
     except Exception as e:
         logging.error(f"Erro geral no processamento de envio: {e}")
 
 # Exemplo de uso
-# processar_envio("Nome do Contato", "Sua mensagem", "Caminho/para/midia")
+# processar_envio(["Nome do Contato 1", "Nome do Contato 2"], "Sua mensagem", "Caminho/para/midia")
